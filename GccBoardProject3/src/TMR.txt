@@ -1,0 +1,67 @@
+﻿/*
+ * TMR.c
+ *
+ * Created: 2020-07-16 오전 10:29:49
+ *  Author: khs
+ */ 
+
+/*
+콜백 함수 등의 여러 제약 조건을 생각하면 헤더화하기 보다는 
+이 페이지를 참고하여 실사용할 소스 파일에 작성하는 게 좋을듯.
+*/ 
+
+#include "asf.h"
+
+
+void tc_callback1_tmp(struct tc_module *const module_inst){}
+
+// struct tc_module tc_instance;
+
+void configure_tc(struct tc_module* tc_instance){
+	struct tc_config config_tc;
+	tc_get_config_defaults(&config_tc);
+	
+	config_tc.counter_size = TC_COUNTER_SIZE_16BIT;				// clock buffer size
+	config_tc.clock_source = GCLK_GENERATOR_0;					// clock src - internal
+	config_tc.clock_prescaler = TC_CLOCK_PRESCALER_DIV16;		// clock prescaler
+	config_tc.counter_16_bit.value = 0;							// Start value of timer buffer after overflow
+	// TMR basic settings
+
+//	config_tc.counter_16_bit.compare_capture_channel[0] = 100;
+//	config_tc.counter_16_bit.compare_capture_channel[1] = 4000;
+	// compare evt ~> Event occurs when the desired bit is filled by this value
+
+	
+//	config_tc.counter_8_bit.period = 100;
+//	config_tc.counter_8_bit.compare_capture_channel[0] = 50;	// compare timing
+//	config_tc.counter_8_bit.compare_capture_channel[1] = 54;
+
+	tc_init(tc_instance, TC3, &config_tc);
+	tc_enable(tc_instance);
+	// initializing & enabling HW
+	
+	tc_register_callback(tc_instance, tc_callback1_tmp, TC_CALLBACK_OVERFLOW);
+//	tc_register_callback(tc_instance, tc_callback2_tmp, TC_CALLBACK_CC_CHANNEL0);
+//	tc_register_callback(tc_instance, tc_callback3_tmp, TC_CALLBACK_CC_CHANNEL1);
+	tc_enable_callback(tc_instance, TC_CALLBACK_OVERFLOW);
+//	tc_enable_callback(tc_instance, TC_CALLBACK_CC_CHANNEL0);
+//	tc_enable_callback(tc_instance, TC_CALLBACK_CC_CHANNEL1);
+}
+// tc_register_callback & enable_callback
+/*	
+	Callback for TC overflow
+	TC_CALLBACK_OVERFLOW,
+	
+	Callback for capture overflow error
+	TC_CALLBACK_ERROR,
+	
+	Callback for capture compare channel 0
+	TC_CALLBACK_CC_CHANNEL0,
+
+	Callback for capture compare channel 1
+	TC_CALLBACK_CC_CHANNEL1,
+*/
+
+void disable_tc(struct tc_module* tc_instance){
+	tc_disable(tc_instance);
+}

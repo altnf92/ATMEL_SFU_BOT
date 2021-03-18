@@ -1,0 +1,64 @@
+﻿/*
+ * RTC_exmaple.c
+ *
+ * Created: 2020-07-28 오후 2:17:49
+ *  Author: khs
+ */ 
+
+#include <asf.h>
+#include <custom_pin_map.h>
+#include <ADC_4_Channel.h>
+
+
+struct rtc_module rtc_instance;
+struct port_config pin_conf;
+
+
+char boolean = false;
+
+
+void configure_rtc_count(void){
+	struct rtc_count_config config_rtc_count;
+	rtc_count_get_config_defaults(&config_rtc_count);
+
+	config_rtc_count.prescaler				= RTC_COUNT_PRESCALER_DIV_1024;
+	config_rtc_count.mode					= RTC_COUNT_MODE_32BIT;
+	config_rtc_count.continuously_update	= true;
+
+	rtc_count_init(&rtc_instance, RTC, &config_rtc_count);
+	rtc_count_enable(&rtc_instance);
+}void rtc_overflow_callback(void){
+	if(boolean == false)	boolean = true;
+	else					boolean = false;
+	
+	port_pin_set_output_level(SOL1_EN, boolean);
+	rtc_count_set_count(&rtc_instance, 0);}void configure_rtc_callbacks(void){
+	//	rtc_count_register_callback(&rtc_instance, rtc_overflow_callback, RTC_COUNT_CALLBACK_OVERFLOW);
+	//	rtc_count_enable_callback(&rtc_instance, RTC_COUNT_CALLBACK_OVERFLOW);
+
+	rtc_count_register_callback(&rtc_instance, rtc_overflow_callback, RTC_COUNT_CALLBACK_COMPARE_0);
+	rtc_count_enable_callback(&rtc_instance, RTC_COUNT_CALLBACK_COMPARE_0);
+}
+
+
+int ex_func (void)
+{
+	system_init();			// sys init
+	system_interrupt_enable_global();
+
+	
+	port_get_config_defaults(&pin_conf);
+	pin_conf.direction  = PORT_PIN_DIR_OUTPUT;
+	port_pin_set_config(SOL1_EN, &pin_conf);
+
+	port_pin_set_output_level(SOL1_EN, false);
+
+	configure_rtc_count();
+	//	rtc_count_set_period(&rtc_instance, 0);
+	rtc_count_set_compare(&rtc_instance, 1,	RTC_COUNT_COMPARE_0);
+	
+	configure_rtc_callbacks();
+	
+	
+	while(1){};
+}
